@@ -6,6 +6,11 @@ public class JSONObject extends JSON<String>{
 	HashMap<String, Object> data;
 
     public JSONObject(){ data = new HashMap<>(); }
+    
+    public JSONObject(String data) throws JSONException{
+    	this.data = new HashMap<>();
+    	JSON.parse(this, data);
+    }
 
     public void put(String key, Object value){ data.put(key, value); }
 

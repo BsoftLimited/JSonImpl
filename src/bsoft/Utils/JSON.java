@@ -137,6 +137,49 @@ public abstract class JSON<T> implements Serializable{
 			}
 		}
 		
+		private JSONParser(JSON json, String data) throws JSONException{
+			lexer = new JSONLexer(data);
+			if(lexer.hasNext()){
+				Token token = lexer.getNextToken();
+				boolean isOk = false;
+				if(token.type == TokenType.OpenCurlyBracket && json instanceof JSONObject){
+					JSONObject initObject = (JSONObject)json;
+					while(this.lexer.hasNext()){
+						Token init = this.match(TokenType.CloseCurlyBracket, TokenType.String, TokenType.Coma);
+						if(init.type == TokenType.CloseCurlyBracket){
+							isOk = true;
+							break;
+						}else if((init.type == TokenType.String && initObject.size()  == 0) || (initObject.size() > 0 && init.type == TokenType.Coma)){
+							StringToken key = (StringToken) (init.type == TokenType.Coma ? this.match(TokenType.String): init);
+							this.match(TokenType.Colon);
+							initObject.put(key.getString(), this.check());
+						}else{
+							throw new JSONException("Unexpected end of object definition, expecting }");
+						}
+					}
+					if(!isOk){ throw new JSONException("Unexpected end of object definition, expecting }"); }
+				}else if(token.type == TokenType.OpenSquareBracket && json instanceof JSONArray){
+					JSONArray initArray = (JSONArray)json;
+					while(this.lexer.hasNext()){
+						Token init = this.lexer.getNextToken();
+						if(init.type == TokenType.CloseSquareBracket){
+							isOk = true;
+							break;
+						}else if(init.type == TokenType.Coma && initArray.size() > 0){
+							initArray.put(this.check());
+						}else if(initArray.size() == 0){
+							initArray.put(this.check(init));
+						}else{
+							throw new JSONException("Unexpected end of object definition, expecting ]");
+						}
+					}
+					if(!isOk){ throw new JSONException("Unexpected end of object definition, expecting ]"); }
+				}else{
+					throw new JSONException("wrong string format");
+				}
+			}
+		}
+		
 		private Object check(Token current)throws JSONException{
 			switch(current.type){
 				case OpenSquareBracket:
@@ -273,5 +316,9 @@ public abstract class JSON<T> implements Serializable{
     
     public static JSON parse(String data)throws JSONException{
 		return new JSONParser(data).json;
+	}
+	
+	protected static void parse(JSON json, String data)throws JSONException{
+		new JSONParser(json, data);
 	}
 }

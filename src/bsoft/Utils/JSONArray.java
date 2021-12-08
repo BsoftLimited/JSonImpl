@@ -4,6 +4,11 @@ public class JSONArray extends JSON<Integer>{
 	Object[] data;
     int size;
     public JSONArray(){ this.size = 0;}
+    
+    public JSONArray(String data) throws JSONException{
+    	this.size = 0;
+    	JSON.parse(this, data);
+    }
 
     public void put(Object value){
         if(data == null){
